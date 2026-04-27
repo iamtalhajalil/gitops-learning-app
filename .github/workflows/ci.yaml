@@ -38,3 +38,22 @@ jobs:
           tags: |
             ghcr.io/iamtalhajalil/gitops-learning-app:latest
             ghcr.io/iamtalhajalil/gitops-learning-app:${{ github.sha }}
+      - name: Checkout Deployment Repository
+        uses: actions/checkout@v4
+        with:
+          repository: <YOUR_GITHUB_USERNAME>/gitops-learning-deploy
+          token: ${{ secrets.DEPLOY_REPO_TOKEN }}
+          path: deploy-repo
+
+      - name: Update Image Tag in Helm chart
+        run: |
+          cd deploy-repo
+          # This command finds the 'tag:' line in values.yaml and replaces it with the new Git SHA
+          sed -i "s/tag: .*/tag: \"${GITHUB_SHA::7}\"/" my-app-chart/values.yaml
+          
+          # Commit and push the change
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add my-app-chart/values.yaml
+          git commit -m "Auto-update app image to ${GITHUB_SHA::7}"
+          git push origin main
