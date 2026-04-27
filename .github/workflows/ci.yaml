@@ -1,0 +1,40 @@
+name: Build and Push to GHCR
+
+# 1. This tells GitHub to run this workflow every time you push to the 'main' branch
+on:
+  push:
+    branches:
+      - main
+
+# 2. We need permission to write to GitHub's package registry (GHCR)
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 3. Check out your code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 4. Log in to GitHub Container Registry using the built-in GitHub token
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 5. Build the Docker image and push it to GHCR
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          # We tag the image with 'latest' and with the specific Git commit SHA
+          tags: |
+            ghcr.io/iamtalhajalil/gitops-learning-app:latest
+            ghcr.io/iamtalhajalil/gitops-learning-app:${{ github.sha }}
